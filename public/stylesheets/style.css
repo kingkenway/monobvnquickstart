@@ -1,0 +1,65 @@
+.bg-3 { 
+      background-color: #ffffff;
+      color: #555555;
+  }
+  .container-fluid {
+      padding-top: 70px;
+      padding-bottom: 70px;
+  }
+  .navbar {
+      padding-top: 15px;
+      padding-bottom: 15px;
+      border: 0;
+      border-radius: 0;
+      margin-bottom: 0;
+      font-size: 12px;
+      letter-spacing: 5px;
+  }
+  .navbar-nav  li a:hover {
+      color: #1abc9c !important;
+  }
+
+  .active>a {
+    color: #1abc9c !important;;
+  }
+
+  #error {
+    background-color: orange;
+    color: white;
+    padding: 16px;
+    display: none;
+    margin-top: -50px;
+  }
+
+  #message{
+    display: none;
+    color: black;
+  }
+
+  #spinner{
+    width: 50px;
+    margin-top: -80px;
+    display: none;
+    float: left
+  }
+
+#verify, #details, #final {
+    display: none
+}
+
+input[type="number"] {
+    height: 45px;
+    padding: 8px;
+    border-radius: 5px;
+    border: none;
+    border: 1px solid black
+}
+
+button {
+    background-color: black;
+    color: white;
+    padding: 8px;
+    border: none;
+    height: 40px;
+    border-radius: 4px;
+}

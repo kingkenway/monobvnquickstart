@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <% include partials/head %>
+  </head>
+  <body>
+    <% include partials/menu %>
+
+    <div class="container-fluid bg-3 text-centerx container" id="initiate">
+      <h3>Quickly Verify Your BVN Identity</h3>
+      <br />
+
+      <div class="row">
+        <div class="col-sm-6">
+          <p>Provide your BVN number in the box below</p>
+
+          <form id="initiateForm">
+            <input
+              name="bvn"
+              type="number"
+              placeholder="e.g 12345678901"
+              required
+            />
+            <br />
+            <br />
+            <p class="">
+              <button>Proceed</button>
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid bg-3 text-centerx container" id="verify">
+      <h3>Confirm your verification method</h3>
+      <br />
+
+      <div class="row">
+        <div class="col-sm-6">
+          <p>Proceed with your choice</p>
+
+          <form id="verifyForm">
+            <div id="radioButtonsContainer"></div>
+            <br />
+            <br />
+            <p class="">
+              <button>Submit</button>
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid bg-3 text-centerx container" id="details">
+      <h3>Provide the OTP sent to your phone/email.</h3>
+      <br />
+
+      <div class="row">
+        <div class="col-sm-6">
+          <p id="message" class=""></p>
+          <p>Input your OTP value in the box below</p>
+
+          <form id="otpForm">
+            <input name="otp" type="number" placeholder="e.g 123456" required />
+            <br />
+            <br />
+            <p class="">
+              <button>Submit</button>
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid bg-3 text-centerx container" id="final">
+      <h3>My BVN Information </h3>
+      <br />
+
+      <div class="row">
+        <div class="col-sm-6">
+          <div id="data"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <p id="error" class=""></p>
+
+      <img src="./img/spinner.gif" alt="" id="spinner">
+    </div>
+
+  </body>
+
+  <script>
+    // Declare div variables
+    const initiateForm = document.getElementById("initiateForm");
+    const verifyForm = document.getElementById("verifyForm");
+    const otpForm = document.getElementById("otpForm");
+    // --
+    const initiateDiv = document.getElementById("initiate");
+    const verifyDiv = document.getElementById("verify");
+    const detailsDiv = document.getElementById("details");
+    const finalDiv = document.getElementById("final");
+
+    const error = document.getElementById("error");
+    const messageBox = document.getElementById("message");
+    const dataDiv = document.getElementById("data");
+
+    let sessionId = null;
+    let message = null;
+
+    // This function is to dynamically generate input radio buttons which depends on the available methods of verification
+    // from NIBSS record. In some cases, phone and email gets returned, in another case only phone gets returned and sometimes
+    // only email is returned.
+
+    function generateRadioButtons(methods) {
+      const radioButtonsContainer = document.getElementById(
+        "radioButtonsContainer"
+      );
+
+      // Clear any existing radio buttons
+      radioButtonsContainer.innerHTML = "";
+
+      // Create a radio button for each available method
+      methods.forEach((methodObj) => {
+        const method = methodObj.method;
+        const hint = methodObj.hint;
+
+        const radioButton = document.createElement("input");
+        radioButton.type = "radio";
+        radioButton.name = "medium";
+        radioButton.value = method;
+        radioButton.required = true;
+
+        const label = document.createElement("label");
+        label.appendChild(radioButton);
+        label.appendChild(document.createTextNode(" " + hint));
+
+        radioButtonsContainer.appendChild(label);
+      });
+    }
+
+    // This function is to handle the load state when a request is made and has ended
+    function initiateLoader(status) {
+      const loader = document.getElementById("spinner");
+      if (status == true) {
+        loader.style.display = "block";
+        error.style.display = "none";
+      }else{
+        loader.style.display = "none";
+      }
+    }
+
+    // This event listener listens to when a bvn has been submitted
+    initiateForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      initiateLoader(true);
+
+      const bvn = initiateForm.bvn.value;
+
+      try {
+        const res = await fetch("/initiate", {
+          method: "POST",
+          body: JSON.stringify({ bvn }),
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await res.json();
+        initiateLoader(false);
+
+        if (res.status == 200) {
+          sessionId = data.data.session_id;
+          generateRadioButtons(data.data.methods);
+          initiateDiv.style.display = "none";
+          verifyDiv.style.display = "block";
+
+          console.log(data);
+        } else {
+          initiateLoader(false);
+          error.textContent = "Error: " + data.message;
+          error.style.display = "block";
+        }
+      } catch (err) {
+        console.log(err);
+        initiateLoader(false)
+      }
+    });
+
+    // This event listener listens to when a method has been submitted. It also passes the session id to the backend.
+    verifyForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      initiateLoader(true);
+
+      const medium = verifyForm.medium.value;
+
+      try {
+        const res = await fetch("/verify", {
+          method: "POST",
+          body: JSON.stringify({ medium, session_id: sessionId }),
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await res.json();
+        initiateLoader(false);
+
+        if (res.status == 200) {
+          // message = data.message;
+
+          messageBox.textContent = data.message;
+          messageBox.style.display = "block";
+
+          verifyDiv.style.display = "none";
+          detailsDiv.style.display = "block";
+
+          console.log(data);
+        } else {
+          initiateLoader(false);
+          error.textContent = "Error: " + data.message;
+          error.style.display = "block";
+        }
+      } catch (err) {
+        initiateLoader(false);
+        console.log(err);
+      }
+    });
+
+    // This event listener listens to when an OTP has been submitted. Once successful, BVN details is rendered in a div.
+    otpForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      initiateLoader(true);
+
+      const otp = otpForm.otp.value;
+
+      try {
+        const res = await fetch("/get-details", {
+          method: "POST",
+          body: JSON.stringify({ otp, session_id: sessionId }),
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await res.json();
+        console.log(data);
+        initiateLoader(false);
+
+        if (res.status == 200) {
+          result = data.data.data;
+          detailsDiv.style.display = "none";
+          final.style.display = "block";
+
+          // Here, the result is been fetched successfuly and rendered dynamically in the div.
+          let dataStr = "";
+          for (const key in result) {
+            const value = result[key];
+            if (key === "photoId") {
+              // decode base64-encoded photoId
+              dataStr += `<b>${key}:</b> <img src="data:image/png;base64,${value.substring(0, 10)}..."/>`;
+            } else {
+              dataStr += `<b>${key}:</b> ${value}<br>`;
+            }
+          }
+          dataDiv.innerHTML = dataStr;
+
+        } else {
+          initiateLoader(false);
+          error.textContent = "Error: " + data.message;
+          error.style.display = "block";
+        }
+      } catch (err) {
+        initiateLoader(false);
+        console.log(err);
+      }
+    });
+  </script>
+  </script>
+
+  <% include partials/script %>
+</html>
