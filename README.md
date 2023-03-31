@@ -2,11 +2,7 @@
 
 ### Get up and running with Mono BVN Consent Lookup APIs.
 
-<br />
-
 ## 1. Steps to quickly start this on your machine
-
-<br>
 
 ### a. Clone the repository
 
